@@ -7,7 +7,14 @@ import {
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
-import { useEffect, type ReactNode } from "react";
+import { Menu } from "lucide-react";
+import { useEffect, useState, type ReactNode } from "react";
+
+import { DesktopSidebar, SidebarNav } from "@/components/AppSidebar";
+import { Button } from "@/components/ui/button";
+import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { Toaster } from "@/components/ui/sonner";
+import { applyTheme, readSettings } from "@/lib/settings";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
@@ -77,19 +84,27 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Lovable App" },
-      { name: "description", content: "Lovable Generated Project" },
-      { name: "author", content: "Lovable" },
-      { property: "og:title", content: "Lovable App" },
-      { property: "og:description", content: "Lovable Generated Project" },
+      { title: "AI WorkMate — AI research, email and meeting tools" },
+      {
+        name: "description",
+        content:
+          "AI WorkMate turns topics into research briefs, purposes into polished emails, and messy notes into action items. No sign-up required.",
+      },
+      { property: "og:title", content: "AI WorkMate" },
+      {
+        property: "og:description",
+        content: "Research, write emails and summarize meetings with AI. No account needed.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:site", content: "@Lovable" },
     ],
     links: [
+      { rel: "stylesheet", href: appCss },
+      { rel: "preconnect", href: "https://fonts.googleapis.com" },
+      { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
       {
         rel: "stylesheet",
-        href: appCss,
+        href: "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap",
       },
       { rel: "icon", href: "/favicon.ico", type: "image/x-icon" },
     ],
@@ -114,13 +129,46 @@ function RootShell({ children }: { children: ReactNode }) {
   );
 }
 
+function AppLayout() {
+  const [open, setOpen] = useState(false);
+
+  useEffect(() => {
+    applyTheme(readSettings().theme);
+  }, []);
+
+  return (
+    <div className="flex min-h-screen w-full bg-background text-foreground">
+      <DesktopSidebar />
+      <div className="flex min-w-0 flex-1 flex-col">
+        <header className="sticky top-0 z-20 flex items-center gap-3 border-b border-border bg-card/80 px-4 py-3 backdrop-blur md:hidden">
+          <Sheet open={open} onOpenChange={setOpen}>
+            <SheetTrigger asChild>
+              <Button variant="ghost" size="icon" aria-label="Open navigation">
+                <Menu className="size-5" />
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="left" className="w-72 p-0">
+              <SheetTitle className="sr-only">Navigation</SheetTitle>
+              <SidebarNav onNavigate={() => setOpen(false)} />
+            </SheetContent>
+          </Sheet>
+          <span className="font-display text-base font-semibold">AI WorkMate</span>
+        </header>
+        <main className="mx-auto w-full max-w-6xl flex-1 px-5 py-8 md:px-10">
+          <Outlet />
+        </main>
+      </div>
+      <Toaster position="top-right" richColors />
+    </div>
+  );
+}
+
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
 
   return (
     <QueryClientProvider client={queryClient}>
-      {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-      <Outlet />
+      <AppLayout />
     </QueryClientProvider>
   );
 }
